@@ -1,0 +1,48 @@
+{
+  "name": "aws-cloudfront-s3-deploy",
+  "version": "1.0.5",
+  "description": "Package to upload files to s3 distribution, and also invalidate those paths in CloudFront if necessary",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "./node_modules/eslint/bin/eslint.js src/*.js  || true",
+    "release": "standard-version"
+  },
+  "keywords": [
+    "aws",
+    "cloudfront",
+    "s3"
+  ],
+  "author": {
+    "name": "Peter Reid",
+    "email": "contact@reidweb.com",
+    "url": "https://reidweb.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ReidWeb/aws-cloudfront-s3-deploy"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.311.0",
+    "chalk": "^2.4.1",
+    "commander": "^2.18.0",
+    "cz-conventional-changelog": "^2.1.0",
+    "progress": "^2.0.0",
+    "recursive-readdir": "^2.2.2"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "commitizen": "^2.10.1",
+    "eslint": "^5.5.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-node": "^7.0.1",
+    "eslint-plugin-promise": "^4.0.1",
+    "standard-version": "^4.4.0"
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  }
+}

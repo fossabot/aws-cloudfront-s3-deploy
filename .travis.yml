@@ -1,0 +1,40 @@
+language: node_js
+node_js:
+- "6"
+- "8"
+- "9"
+- "10"
+sudo: false
+#
+#script:
+#- npm run test-with-cov
+
+before_deploy:
+- git remote set-url origin https://${GH_TOKEN}@github.com/ReidWeb/GitInspector-CSV
+- git fetch
+-  git checkout master
+- git config --global user.name 'Travis CI[bot]'
+- git config --global user.email 'travis@reidweb.com'
+- npm run release
+
+deploy:
+  provider: npm
+  email: peter@reidweb.com
+  tag: latest
+  api_key: $NPM_TOKEN
+  skip_cleanup: true
+  on:
+    tags: false
+    condition: '$TRAVIS_COMMIT_MESSAGE != *"chore(release)"*'
+    node: 8
+    repo: ReidWeb/GitInspector-CSV
+    branch: master
+
+after_deploy:
+- git push --tags origin master
+#
+#after_success:
+#- CODECLIMATE_REPO_TOKEN=$CODECLIMATE_TOKEN ./node_modules/codeclimate-test-reporter/bin/codeclimate.js < ./coverage/lcov.info
+
+git:
+  depth: 10
