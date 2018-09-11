@@ -3,6 +3,7 @@ const AWS = require('aws-sdk');
 const chalk = require('chalk');
 const fs = require('fs');
 const ProgressBar = require('progress');
+var mime = require('mime-types')
 
 const reAttemptMax = 5;
 
@@ -64,6 +65,21 @@ function hasFileChanged(path, bucketName, s3) {
   });
 }
 
+function lookupFileType (filePath) {
+  return new Promise((resolve, reject) => {
+    try {
+      let type = mime.lookup(filePath)
+      if (type) {
+        resolve(type);
+      } else {
+        resolve('application/octet-stream');
+      }
+    } catch (e) {
+      resolve('application/octet-stream');
+    }
+  });
+}
+
 function uploadFiles(fileList, bucketName, verboseMode, isCli) {
   const s3 = new AWS.S3();
   return new Promise((resolve, reject) => {
@@ -84,45 +100,50 @@ function uploadFiles(fileList, bucketName, verboseMode, isCli) {
 
     fileList.forEach((filePath) => {
       getFileLastModifiedDate(`public/${filePath}`).then((localFileModifiedLastDate) => {
-        const params = {
-          Bucket: bucketName,
-          Key: filePath,
-          Body: fs.readFileSync(`public/${filePath}`),
-          Metadata: {
-            'Last-Modified': localFileModifiedLastDate.toString(),
-          },
-        };
-        uploadObj(params, s3, 0)
-          .then((fileName) => {
-            if (verboseMode) {
-              // eslint-disable-next-line no-console
-              console.log(chalk.green(`Successfully uploaded ${fileName} to ${bucketName}`));
-            }
-            itemsProcessed++;
-
-            if (itemsProcessed === nextIncrement) {
-              nextIncrement += barIncrement;
-              if (isCli) {
-                bar.tick();
+        lookupFileType(`public/${filePath}`).then((fileType) => {
+          const params = {
+            Bucket: bucketName,
+            Key: filePath,
+            Body: fs.readFileSync(`public/${filePath}`),
+            ContentType: fileType,
+            Metadata: {
+              'Last-Modified': localFileModifiedLastDate.toString(),
+            },
+          };
+          uploadObj(params, s3, 0)
+            .then((fileName) => {
+              if (verboseMode) {
+                // eslint-disable-next-line no-console
+                console.log(chalk.green(`Successfully uploaded ${fileName} to ${bucketName}`));
               }
-            }
+              itemsProcessed++;
 
-            if (itemsProcessed === fileListLength) {
-              let i;
-              if (isCli) {
-                for (i = bar.total - bar.curr; i >= 0; i--) {
+              if (itemsProcessed === nextIncrement) {
+                nextIncrement += barIncrement;
+                if (isCli) {
                   bar.tick();
-
-                  if (i === 0) {
-                    resolve('Upload complete!');
-                  }
                 }
-              } else resolve("Upload complete!");
-            }
-          })
-          .catch((e) => {
-            reject(e);
-          });
+              }
+
+              if (itemsProcessed === fileListLength) {
+                let i;
+                if (isCli) {
+                  for (i = bar.total - bar.curr; i >= 0; i--) {
+                    bar.tick();
+
+                    if (i === 0) {
+                      resolve('Upload complete!');
+                    }
+                  }
+                } else resolve("Upload complete!");
+              }
+            })
+            .catch((e) => {
+              reject(e);
+            });
+        }).catch((e) => {
+          reject(e)
+        });
       });
     });
   });
